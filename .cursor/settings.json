@@ -1,0 +1,34 @@
+{
+  "plugins": {
+    "supabase": {
+      "enabled": true
+    },
+    "deploy-on-aws": {
+      "enabled": true
+    },
+    "linear": {
+      "enabled": true
+    },
+    "cloudflare": {
+      "enabled": true
+    },
+    "vercel": {
+      "enabled": true
+    },
+    "gitlab": {
+      "enabled": true
+    },
+    "stripe": {
+      "enabled": true
+    },
+    "notion-workspace": {
+      "enabled": true
+    },
+    "meta-quest-agentic-tools": {
+      "enabled": true
+    },
+    "slack": {
+      "enabled": true
+    }
+  }
+}

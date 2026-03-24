@@ -10,7 +10,20 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Environment (Supabase, RevenueCat)
+
+   Copy the example env file and fill in values:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Required for **subscriptions**: set `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` (`appl_…`) and `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY` (`goog_…`) from the [RevenueCat dashboard](https://app.revenuecat.com).  
+   In **development**, if these are missing, the app falls back to a bundled test key so purchases can run in the simulator.
+
+   For **Stripe card payments** (Profile → “Pay with Stripe”), add `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY` (`pk_test_…` or live), deploy the Edge Function `supabase/functions/create-payment-intent`, and set the secret `STRIPE_SECRET_KEY` (`sk_test_…` or live) with `supabase secrets set STRIPE_SECRET_KEY=...`. Rebuild the native app after installing `@stripe/stripe-react-native` (`npx expo run:ios` / `run:android`).
+
+3. Start the app
 
    ```bash
    npx expo start
@@ -24,16 +37,6 @@ In the output, you'll find options to open the app in a
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
 ## Learn more
 

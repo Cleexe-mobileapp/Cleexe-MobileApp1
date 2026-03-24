@@ -7,4 +7,11 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
+  // RNGH requires a side-effect import plus GestureHandlerRootView from the same package.
+  {
+    files: ['app/_layout.tsx'],
+    rules: {
+      'import/no-duplicates': 'off',
+    },
+  },
 ]);
