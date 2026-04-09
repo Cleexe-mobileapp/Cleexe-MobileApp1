@@ -19,11 +19,27 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { supabase } from '../../services/supabase';
 import NewQuestionModal from '../../components/NewQuestionModal';
+import {
+  AskBubbleSeedIcon,
+  AskButtonSeedIcon,
+  BestAnswerBloomIcon,
+  PrivateLockSproutIcon,
+  PublicGlobeSproutIcon,
+  ReactionHeartSproutIcon,
+  ReactionIdeaSparkIcon,
+  ReactionRiseVineIcon,
+  ReplyLeafIcon,
+  VideoBubblePlayIcon,
+} from '../../components/icons/CleexeIcons';
 import { useTheme } from '../../theme/ThemeContext';
 import ChromeButton from '../../components/ui/ChromeButton';
 
 const { width: SCREEN_W } = Dimensions.get('window');
-const VIBE_EMOJIS = ['🔥', '😂', '💪'];
+const VIBE_REACTIONS = [
+  { key: '🔥', Icon: ReactionHeartSproutIcon },
+  { key: '😂', Icon: ReactionIdeaSparkIcon },
+  { key: '💪', Icon: ReactionRiseVineIcon },
+];
 const FREE_DAILY_LIMIT = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const FREE_24H_COOLDOWN_MS = 10 * 60 * 60 * 1000;
@@ -112,20 +128,26 @@ function getExpiryMeta(expiresAt, nowMs) {
 const VibeBar = React.memo(function VibeBar({ vibes, reacted, onReact, id }) {
   return (
     <View style={styles.vibeBar}>
-      {VIBE_EMOJIS.map((emoji) => {
-        const count = vibes[emoji] || 0;
-        const active = reacted === emoji;
+      {VIBE_REACTIONS.map(({ key, Icon }) => {
+        const count = vibes[key] || 0;
+        const active = reacted === key;
         return (
           <Pressable
-            key={emoji}
+            key={key}
             style={({ pressed }) => [
               styles.vibePill,
               active && styles.vibePillActive,
               pressed && styles.vibePillPressed,
             ]}
-            onPress={() => onReact(id, emoji)}
+            onPress={() => onReact(id, key)}
           >
-            <Text style={styles.vibeEmoji}>{emoji}</Text>
+            <View style={styles.vibeIconWrap}>
+              <Icon
+                size={14}
+                color={active ? '#6B4EFF' : '#9CA3AF'}
+                focused={active}
+              />
+            </View>
             <Text style={[styles.vibeCount, active && styles.vibeCountActive]}>
               {formatCount(count + (active ? 1 : 0))}
             </Text>
@@ -190,7 +212,10 @@ function QuestionCard({ item, reaction, onReact, theme }) {
           </View>
 
           {/* Question Text */}
-          <Text style={[styles.qText, { color: theme.textPrimary }]}>{item.text}</Text>
+          <View style={styles.qQuestionRow}>
+            <AskBubbleSeedIcon size={18} color={theme.textSecondary} />
+            <Text style={[styles.qText, { color: theme.textPrimary }]}>{item.text}</Text>
+          </View>
 
           {/* Video Thumbnail Placeholder */}
           {item.hasVideo && (
@@ -204,12 +229,16 @@ function QuestionCard({ item, reaction, onReact, theme }) {
 
           {/* Reply Info */}
           <View style={styles.qReplyRow}>
-            <Text style={[styles.qReplyCount, { color: theme.textSecondary }]}>
-              💬 {item.replies} {item.replies === 1 ? 'reply' : 'replies'}
-            </Text>
+            <View style={styles.qReplyCountWrap}>
+              <ReplyLeafIcon size={14} color={theme.textSecondary} />
+              <Text style={[styles.qReplyCount, { color: theme.textSecondary }]}>
+                {item.replies} {item.replies === 1 ? 'reply' : 'replies'}
+              </Text>
+            </View>
             {item.bestReply && (
               <View style={styles.qBestBadge}>
-                <Text style={styles.qBestBadgeText}>✓ Best Answer</Text>
+                <BestAnswerBloomIcon size={11} color="#059669" />
+                <Text style={styles.qBestBadgeText}>Best Answer</Text>
               </View>
             )}
           </View>
@@ -585,9 +614,16 @@ export default function AskScreen() {
           style={styles.segmentedTab}
           onPress={() => setActiveTab('public')}
         >
-          <Text style={[styles.segmentedLabel, activeTab === 'public' && styles.segmentedLabelActive]}>
-            🌐 Public
-          </Text>
+          <View style={styles.segmentedLabelRow}>
+            <PublicGlobeSproutIcon
+              size={14}
+              color={activeTab === 'public' ? '#111827' : '#9CA3AF'}
+              focused={activeTab === 'public'}
+            />
+            <Text style={[styles.segmentedLabel, activeTab === 'public' && styles.segmentedLabelActive]}>
+              Public
+            </Text>
+          </View>
           <Text style={[styles.segmentedCount, activeTab === 'public' && styles.segmentedCountActive]}>
             {publicQuestions.length}
           </Text>
@@ -596,9 +632,16 @@ export default function AskScreen() {
           style={styles.segmentedTab}
           onPress={() => setActiveTab('private')}
         >
-          <Text style={[styles.segmentedLabel, activeTab === 'private' && styles.segmentedLabelActive]}>
-            🔒 Private
-          </Text>
+          <View style={styles.segmentedLabelRow}>
+            <PrivateLockSproutIcon
+              size={14}
+              color={activeTab === 'private' ? '#111827' : '#9CA3AF'}
+              focused={activeTab === 'private'}
+            />
+            <Text style={[styles.segmentedLabel, activeTab === 'private' && styles.segmentedLabelActive]}>
+              Private
+            </Text>
+          </View>
           <Text style={[styles.segmentedCount, activeTab === 'private' && styles.segmentedCountActive]}>
             {privateQuestions.length}
           </Text>
@@ -607,9 +650,16 @@ export default function AskScreen() {
           style={styles.segmentedTab}
           onPress={() => setActiveTab('24h')}
         >
-          <Text style={[styles.segmentedLabel, activeTab === '24h' && styles.segmentedLabelActive]}>
-            24h
-          </Text>
+          <View style={styles.segmentedLabelRow}>
+            <VideoBubblePlayIcon
+              size={14}
+              color={activeTab === '24h' ? '#111827' : '#9CA3AF'}
+              focused={activeTab === '24h'}
+            />
+            <Text style={[styles.segmentedLabel, activeTab === '24h' && styles.segmentedLabelActive]}>
+              24h
+            </Text>
+          </View>
           <Text style={[styles.segmentedCount, activeTab === '24h' && styles.segmentedCountActive]}>
             {v24hMessages.length}
           </Text>
@@ -652,7 +702,15 @@ export default function AskScreen() {
 
   const renderEmpty = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyEmoji}>{activeTab === 'public' ? '🌐' : '🔒'}</Text>
+      <View style={styles.emptyIconWrap}>
+        {activeTab === 'public' ? (
+          <PublicGlobeSproutIcon size={38} color="#6B4EFF" focused />
+        ) : activeTab === 'private' ? (
+          <PrivateLockSproutIcon size={38} color="#6B4EFF" focused />
+        ) : (
+          <VideoBubblePlayIcon size={38} color="#6B4EFF" focused />
+        )}
+      </View>
       <Text style={styles.emptyTitle}>
         {activeTab === 'public'
           ? 'No public questions yet'
@@ -711,7 +769,13 @@ export default function AskScreen() {
         style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
         onPress={activeTab === '24h' ? handlePost24hVideo : () => setModalVisible(true)}
       >
-        <Text style={styles.fabIcon}>{activeTab === '24h' ? '🎬' : '✍️'}</Text>
+        <View style={styles.fabIconWrap}>
+          {activeTab === '24h' ? (
+            <VideoBubblePlayIcon size={16} color="#FFFFFF" focused />
+          ) : (
+            <AskButtonSeedIcon size={16} color="#FFFFFF" focused />
+          )}
+        </View>
         <Text style={styles.fabLabel}>{activeTab === '24h' ? 'Post 24h' : 'Ask'}</Text>
       </Pressable>
 
@@ -784,7 +848,8 @@ const styles = StyleSheet.create({
   /* Segmented Control */
   segmentedOuter: { flexDirection: 'row', marginHorizontal: 20, backgroundColor: 'rgba(255,255,255,0.35)', borderRadius: 16, padding: 4, marginBottom: 12, position: 'relative', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.32)' },
   segmentedIndicator: { position: 'absolute', top: 4, left: 4, width: (SCREEN_W - 48) / 3, height: '100%', backgroundColor: '#FFFFFF', borderRadius: 11, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
-  segmentedTab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, gap: 6, zIndex: 1 },
+  segmentedTab: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, gap: 4, zIndex: 1 },
+  segmentedLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   segmentedLabel: { fontSize: 14, fontWeight: '600', color: '#9CA3AF' },
   segmentedLabelActive: { color: '#111827', fontWeight: '700' },
   segmentedCount: { fontSize: 12, fontWeight: '700', color: '#D1D5DB', backgroundColor: '#E5E7EB', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1, overflow: 'hidden' },
@@ -819,7 +884,8 @@ const styles = StyleSheet.create({
   qVideoIcon: { fontSize: 12 },
   qVideoLabel: { fontSize: 11, fontWeight: '700', color: '#DC2626' },
 
-  qText: { fontSize: 24, fontWeight: '700', color: '#1F2937', lineHeight: 34, letterSpacing: -0.3 },
+  qQuestionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  qText: { flex: 1, fontSize: 24, fontWeight: '700', color: '#1F2937', lineHeight: 34, letterSpacing: -0.3 },
 
   qVideoThumb: {
     flexDirection: 'row',
@@ -844,8 +910,9 @@ const styles = StyleSheet.create({
   qVideoPlayLabel: { color: '#FFFFFF', fontSize: 13, fontWeight: '600' },
 
   qReplyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16 },
+  qReplyCountWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   qReplyCount: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
-  qBestBadge: { backgroundColor: '#ECFDF5', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  qBestBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#ECFDF5', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
   qBestBadgeText: { fontSize: 10, fontWeight: '700', color: '#059669' },
 
   qBestCard: { backgroundColor: 'rgba(16,185,129,0.08)', borderRadius: 16, padding: 14, marginTop: 10, borderWidth: 1, borderColor: '#D1FAE5' },
@@ -853,16 +920,16 @@ const styles = StyleSheet.create({
 
   /* Vibe Bar */
   vibeBar: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(148,163,184,0.15)' },
-  vibePill: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#F9FAFB', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#F0F0F5' },
+  vibePill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#F9FAFB', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#F0F0F5' },
   vibePillActive: { backgroundColor: '#F5F3FF', borderColor: '#E0DCFF' },
   vibePillPressed: { transform: [{ scale: 0.92 }] },
-  vibeEmoji: { fontSize: 13 },
+  vibeIconWrap: { width: 14, height: 14, alignItems: 'center', justifyContent: 'center' },
   vibeCount: { fontSize: 11, fontWeight: '700', color: '#9CA3AF' },
   vibeCountActive: { color: '#6B4EFF' },
 
   /* Empty State */
   emptyState: { alignItems: 'center', paddingTop: 60, paddingBottom: 40 },
-  emptyEmoji: { fontSize: 48, marginBottom: 12 },
+  emptyIconWrap: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   emptyTitle: { fontSize: 17, fontWeight: '700', color: '#111827' },
   emptySub: { fontSize: 13, color: '#9CA3AF', marginTop: 4 },
 
@@ -885,7 +952,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   fabPressed: { opacity: 0.85, transform: [{ scale: 0.95 }] },
-  fabIcon: { fontSize: 16 },
+  fabIconWrap: { width: 18, height: 18, alignItems: 'center', justifyContent: 'center' },
   fabLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
 
   /* 24h Wall */

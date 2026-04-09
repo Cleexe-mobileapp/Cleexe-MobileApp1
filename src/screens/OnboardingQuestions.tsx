@@ -31,7 +31,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { create } from 'zustand';
 
 import { useAuthSession } from '../context/AuthSessionProvider';
-import { setPersistedTabSegment } from '../lib/last-tab-storage';
 import { supabase } from '../services/supabase';
 
 type OnboardingAnswers = {
@@ -604,30 +603,66 @@ export default function OnboardingQuestions() {
         const user = userData?.user;
         if (user) {
           userId = user.id;
+          const timestamp = new Date().toISOString();
 
           await supabase.auth.updateUser({ data: { onboarding_completed: true } })
             .then(({ error }) => { if (error) console.warn('metadata_save:', error.message); });
 
-          await supabase.from('profiles').upsert(
-            {
-              id: user.id,
-              onboarding_completed: true,
-              onboarding_data: answers,
-              onboarding_auth_context: authContext,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'id' }
-          ).then(({ error }) => { if (error) console.warn('profiles_save:', error.message); });
+          const profilePayload: Record<string, unknown> = {
+            id: user.id,
+            onboarding_completed: true,
+            onboarding_answers: answers,
+            journey_launch_seen: false,
+            onboarding_auth_context: authContext,
+            updated_at: timestamp,
+          };
 
-          await supabase.from('onboarding_answers').upsert(
-            {
-              user_id: user.id,
-              ...answers,
-              auth_context: authContext,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: 'user_id' }
-          ).then(({ error }) => { if (error) console.warn('answers_save:', error.message); });
+          const firstProfileSave = await supabase
+            .from('profiles')
+            .upsert(profilePayload, { onConflict: 'id' });
+
+          if (firstProfileSave.error) {
+            const msg = firstProfileSave.error.message ?? '';
+            const missingOnboardingAuthContext =
+              msg.includes('onboarding_auth_context') && msg.includes('schema cache');
+
+            if (missingOnboardingAuthContext) {
+              const fallbackPayload = {
+                id: user.id,
+                onboarding_completed: true,
+                onboarding_answers: answers,
+                journey_launch_seen: false,
+                updated_at: timestamp,
+              };
+              const fallbackSave = await supabase
+                .from('profiles')
+                .upsert(fallbackPayload, { onConflict: 'id' });
+              if (fallbackSave.error) {
+                console.warn('profiles_save:', fallbackSave.error.message);
+              }
+            } else {
+              console.warn('profiles_save:', msg);
+            }
+          }
+
+          const answersPayload = {
+            user_id: user.id,
+            ...answers,
+            auth_context: authContext,
+            updated_at: timestamp,
+          };
+          const answersSave = await supabase
+            .from('onboarding_answers')
+            .upsert(answersPayload, { onConflict: 'user_id' });
+
+          if (answersSave.error) {
+            const msg = answersSave.error.message ?? '';
+            const missingAnswersTable =
+              msg.includes("table 'public.onboarding_answers'") && msg.includes('schema cache');
+            if (!missingAnswersTable) {
+              console.warn('answers_save:', msg);
+            }
+          }
 
           const proxyUrl = process.env.EXPO_PUBLIC_AI_PROXY_URL;
           if (proxyUrl) {
@@ -654,8 +689,7 @@ export default function OnboardingQuestions() {
 
     setSaving(false);
     await refreshOnboarding();
-    await setPersistedTabSegment('home');
-    router.replace('/(tabs)/home');
+    router.replace('/journey-launch');
   };
 
   const cardStyle = useAnimatedStyle(() => ({

@@ -79,22 +79,54 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
     setLastTabSegment(tab);
   }, []);
 
+  /** Re-read session from Supabase + onboarding flags. Must call `setSession` so React state matches storage before navigating to tabs/onboarding. */
   const refreshOnboarding = useCallback(async () => {
-    const { data: { session: s } } = await supabase.auth.getSession();
-    await applySession(s ?? null);
+    try {
+      const {
+        data: { session: s },
+      } = await supabase.auth.getSession();
+      setSession(s ?? null);
+      await applySession(s ?? null);
+    } catch (e) {
+      if (__DEV__) console.warn('[Auth] refreshOnboarding failed:', e);
+    }
   }, [applySession]);
 
   useEffect(() => {
     let mounted = true;
 
     (async () => {
-      const {
-        data: { session: initial },
-      } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setSession(initial ?? null);
-      await applySession(initial ?? null);
-      setInitializing(false);
+      try {
+        const {
+          data: { session: initial },
+          error: initError,
+        } = await supabase.auth.getSession();
+        if (!mounted) return;
+
+        // Stale or revoked refresh token — clear the corrupt session
+        // so the user lands on the welcome screen instead of a crash loop.
+        if (initError) {
+          await supabase.auth.signOut().catch(() => {});
+          setSession(null);
+          await applySession(null);
+          return;
+        }
+
+        setSession(initial ?? null);
+        await applySession(initial ?? null);
+      } catch (e) {
+        // RN fetch: "Network request failed" — offline, bad EXPO_PUBLIC_SUPABASE_URL, or DNS.
+        if (__DEV__) {
+          console.warn(
+            '[Auth] getSession failed (network or config). Check .env + connection, then npx expo start -c',
+            e
+          );
+        }
+        setSession(null);
+        await applySession(null);
+      } finally {
+        if (mounted) setInitializing(false);
+      }
     })();
 
     const {
@@ -102,8 +134,12 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
     } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
       if (!mounted) return;
       if (event === 'INITIAL_SESSION') return;
-      setSession(nextSession ?? null);
-      await applySession(nextSession ?? null);
+      try {
+        setSession(nextSession ?? null);
+        await applySession(nextSession ?? null);
+      } catch (e) {
+        if (__DEV__) console.warn('[Auth] onAuthStateChange handler failed:', e);
+      }
     });
 
     return () => {

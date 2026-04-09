@@ -19,7 +19,7 @@
       "enabled": true
     },
     "stripe": {
-      "enabled": true
+      "enabled": false
     },
     "notion-workspace": {
       "enabled": true
@@ -28,6 +28,9 @@
       "enabled": true
     },
     "slack": {
+      "enabled": true
+    },
+    "render": {
       "enabled": true
     }
   }

@@ -13,7 +13,15 @@ import { useTheme } from '../../theme/ThemeContext';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
-export default function ChromeButton({ label, onPress, style, textStyle, disabled, variant }) {
+export default function ChromeButton({
+  label,
+  onPress,
+  style,
+  textStyle,
+  disabled,
+  variant,
+  leftIcon,
+}) {
   const t = useTheme();
   const shine = useSharedValue(-1);
 
@@ -59,7 +67,10 @@ export default function ChromeButton({ label, onPress, style, textStyle, disable
         style,
       ]}
     >
-      <Text style={[styles.label, { color: textColor }, textStyle]}>{label}</Text>
+      <View style={styles.contentRow}>
+        {leftIcon ? <View style={styles.leftIconWrap}>{leftIcon}</View> : null}
+        <Text style={[styles.label, { color: textColor }, textStyle]}>{label}</Text>
+      </View>
 
       {!isOutline && (
         <AnimatedView
@@ -89,6 +100,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 0.3,
+  },
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  leftIconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   shineStripe: {
     position: 'absolute',

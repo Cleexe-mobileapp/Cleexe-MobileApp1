@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -15,6 +14,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import CategoryPickerModal from '@/src/components/CategoryPickerModal';
+import {
+  CameraBloomIcon,
+  CategoryLeafTagIcon,
+  ProfileHaloIcon,
+} from '@/src/components/icons/CleexeIcons';
 import {
   DEFAULT_PROFILE_CATEGORY,
   categoryToSave,
@@ -211,14 +215,14 @@ export default function EditProfileModal({
                 />
               ) : (
                 <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={40} color="#9CA3AF" />
+                  <ProfileHaloIcon size={40} color="#9CA3AF" />
                 </View>
               )}
               <View style={styles.camBadge}>
                 {uploading ? (
                   <ActivityIndicator size="small" color="#FFF" />
                 ) : (
-                  <Ionicons name="camera" size={16} color="#FFFFFF" />
+                  <CameraBloomIcon size={16} color="#FFFFFF" focused />
                 )}
               </View>
             </View>
@@ -253,12 +257,15 @@ export default function EditProfileModal({
             style={({ pressed }) => [styles.categoryBtn, pressed && styles.pressed]}
             onPress={() => setCategoryOpen(true)}
           >
-            <Text style={styles.categoryBtnText}>
-              {categoryPreset === 'Other' && customOther.trim()
-                ? customOther.trim()
-                : categoryPreset}
-            </Text>
-            <Ionicons name="chevron-down" size={18} color="#6B7280" />
+            <View style={styles.categoryBtnLeft}>
+              <CategoryLeafTagIcon size={14} color={PURPLE} focused />
+              <Text style={styles.categoryBtnText}>
+                {categoryPreset === 'Other' && customOther.trim()
+                  ? customOther.trim()
+                  : categoryPreset}
+              </Text>
+            </View>
+            <Text style={styles.categoryChevron}>▾</Text>
           </Pressable>
 
           <Text style={styles.label}>Bio</Text>
@@ -383,7 +390,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     backgroundColor: '#FAFAFA',
   },
+  categoryBtnLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   categoryBtnText: { fontSize: 15, fontWeight: '600', color: '#374151' },
+  categoryChevron: { fontSize: 16, color: '#6B7280', marginTop: -1 },
   bioInput: { minHeight: 100, textAlignVertical: 'top' },
   charCount: { fontSize: 12, color: '#9CA3AF', alignSelf: 'flex-end', marginTop: 4 },
   pressed: { opacity: 0.85 },

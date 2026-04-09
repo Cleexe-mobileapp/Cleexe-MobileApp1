@@ -9,7 +9,7 @@ export async function replaceWithMainTabs() {
 
 export function replaceWithOnboarding(params?: { source?: string; email?: string }) {
   router.replace({
-    pathname: '/(onboarding)',
+    pathname: '/(onboarding)/onboarding-questions',
     params: {
       source: params?.source ?? 'auth',
       ...(params?.email ? { email: params.email } : {}),

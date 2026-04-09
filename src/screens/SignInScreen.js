@@ -17,8 +17,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 
+import { useAuthSession } from '../context/AuthSessionProvider';
 import { replaceWithMainTabs, replaceWithOnboarding } from '../lib/auth-routes';
 import { supabase, checkOnboardingCompleted } from '../services/supabase';
+import { extractSessionFromUrl } from '../lib/extract-oauth-session';
 
 function GoogleIcon({ size = 20 }) {
   return (
@@ -39,6 +41,7 @@ function isValidEmail(value) {
 }
 
 export default function SignInScreen() {
+  const { refreshOnboarding } = useAuthSession();
   const client = useMemo(() => supabase, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -72,6 +75,7 @@ export default function SignInScreen() {
       });
 
       if (error) throw error;
+      await refreshOnboarding();
       const { data: { user: authUser } } = await client.auth.getUser();
       const done = await checkOnboardingCompleted(authUser?.id);
       if (done) await replaceWithMainTabs();
@@ -110,6 +114,7 @@ export default function SignInScreen() {
       });
 
       if (error) throw error;
+      await refreshOnboarding();
       const { data: { user: appleUser } } = await client.auth.getUser();
       const done = await checkOnboardingCompleted(appleUser?.id);
       if (done) await replaceWithMainTabs();
@@ -143,12 +148,14 @@ export default function SignInScreen() {
       if (!data?.url) throw new Error('Unable to open Google login.');
 
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-      if (result.type !== 'success') return;
+      if (result.type !== 'success' || !result.url) return;
 
-      const { data: sessionData, error: sessionError } = await client.auth.getSession();
+      const { session, error: sessionError } = await extractSessionFromUrl(result.url);
       if (sessionError) throw sessionError;
-      if (sessionData?.session) {
-        const done = await checkOnboardingCompleted(sessionData.session.user?.id);
+
+      if (session) {
+        await refreshOnboarding();
+        const done = await checkOnboardingCompleted(session.user?.id);
         if (done) await replaceWithMainTabs();
         else replaceWithOnboarding({ source: 'signin_google' });
       }

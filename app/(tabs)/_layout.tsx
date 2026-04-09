@@ -1,26 +1,97 @@
-import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Redirect, Tabs, useSegments } from 'expo-router';
 import { useEffect } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
+import type { ComponentType } from 'react';
 
 import { useAuthSession } from '@/src/context/AuthSessionProvider';
 import {
   setPersistedTabSegment,
   type TabSegment,
 } from '@/src/lib/last-tab-storage';
+import {
+  AskBubbleSeedIcon,
+  GrowthLeafChartIcon,
+  HomePlantIcon,
+  ProfileHaloIcon,
+  TeamConnectionIcon,
+} from '@/src/components/icons/CleexeIcons';
 import { useTheme } from '@/src/theme/ThemeContext';
 
+/**
+ * Cross-platform tab bar background.
+ * iOS: frosted-glass BlurView.
+ * Android: BlurView + solid tinted fallback behind it so the effect
+ *          looks identical even on devices where blur isn't supported.
+ */
 function TabBarBackground() {
   const t = useTheme();
+  const isLight = t.tier === 'calm';
+
   return (
-    <BlurView
-      intensity={t.tier === 'calm' ? 80 : 60}
-      tint={t.tier === 'calm' ? 'light' : 'dark'}
-      style={StyleSheet.absoluteFill}
-    />
+    <View style={StyleSheet.absoluteFill}>
+      {isLight && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor:
+                Platform.OS === 'android' ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.55)',
+            },
+          ]}
+        />
+      )}
+      {!isLight && Platform.OS === 'android' && (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: t.tabBg }]} />
+      )}
+      <BlurView
+        intensity={isLight ? 50 : 60}
+        tint={isLight ? 'light' : 'dark'}
+        style={StyleSheet.absoluteFill}
+      />
+    </View>
   );
 }
+
+type TabGlyphProps = { size: number; color: string; focused: boolean };
+
+function TabIconWithDot({
+  Icon,
+  color,
+  size,
+  focused,
+  activeColor,
+}: {
+  Icon: ComponentType<TabGlyphProps>;
+  color: string;
+  size: number;
+  focused: boolean;
+  activeColor: string;
+}) {
+  return (
+    <View style={tabIconStyles.wrap}>
+      <Icon size={size + 2} color={color} focused={focused} />
+      <View style={tabIconStyles.dotSlot}>
+        {focused ? <View style={[tabIconStyles.dot, { backgroundColor: activeColor }]} /> : null}
+      </View>
+    </View>
+  );
+}
+
+const tabIconStyles = StyleSheet.create({
+  wrap: { alignItems: 'center', justifyContent: 'flex-start' },
+  dotSlot: {
+    height: 6,
+    marginTop: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+});
 
 const TAB_NAMES = ['home', 'growth', 'team', 'ask', 'profile'] as const;
 
@@ -61,15 +132,15 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: t.tabInactive,
         tabBarStyle: {
           position: 'absolute',
-          backgroundColor: Platform.OS === 'ios' ? 'transparent' : t.tabBg,
+          backgroundColor: 'transparent',
           borderTopWidth: 1,
           borderTopColor: t.tabBorder,
-          height: 88,
-          paddingBottom: 28,
+          height: Platform.select({ ios: 88, android: 72 }),
+          paddingBottom: Platform.select({ ios: 28, android: 12 }),
           paddingTop: 8,
           elevation: 0,
         },
-        tabBarBackground: Platform.OS === 'ios' ? () => <TabBarBackground /> : undefined,
+        tabBarBackground: () => <TabBarBackground />,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
@@ -91,7 +162,13 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={size} color={color} />
+            <TabIconWithDot
+              Icon={HomePlantIcon}
+              color={color}
+              size={size}
+              focused={focused}
+              activeColor={t.tabActive}
+            />
           ),
         }}
       />
@@ -100,10 +177,12 @@ export default function TabsLayout() {
         options={{
           title: 'Growth',
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? 'trending-up' : 'trending-up-outline'}
-              size={size}
+            <TabIconWithDot
+              Icon={GrowthLeafChartIcon}
               color={color}
+              size={size}
+              focused={focused}
+              activeColor={t.tabActive}
             />
           ),
         }}
@@ -113,7 +192,13 @@ export default function TabsLayout() {
         options={{
           title: 'Team',
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'people' : 'people-outline'} size={size} color={color} />
+            <TabIconWithDot
+              Icon={TeamConnectionIcon}
+              color={color}
+              size={size}
+              focused={focused}
+              activeColor={t.tabActive}
+            />
           ),
         }}
       />
@@ -122,10 +207,12 @@ export default function TabsLayout() {
         options={{
           title: 'Ask',
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? 'help-circle' : 'help-circle-outline'}
-              size={size}
+            <TabIconWithDot
+              Icon={AskBubbleSeedIcon}
               color={color}
+              size={size}
+              focused={focused}
+              activeColor={t.tabActive}
             />
           ),
         }}
@@ -135,7 +222,13 @@ export default function TabsLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
+            <TabIconWithDot
+              Icon={ProfileHaloIcon}
+              color={color}
+              size={size}
+              focused={focused}
+              activeColor={t.tabActive}
+            />
           ),
         }}
       />

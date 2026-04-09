@@ -10,7 +10,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Environment (Supabase, RevenueCat)
+2. Environment (Supabase)
 
    Copy the example env file and fill in values:
 
@@ -18,10 +18,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    cp .env.example .env
    ```
 
-   Required for **subscriptions**: set `EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` (`appl_…`) and `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY` (`goog_…`) from the [RevenueCat dashboard](https://app.revenuecat.com).  
-   In **development**, if these are missing, the app falls back to a bundled test key so purchases can run in the simulator.
-
-   For **Stripe card payments** (Profile → “Pay with Stripe”), add `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY` (`pk_test_…` or live), deploy the Edge Function `supabase/functions/create-payment-intent`, and set the secret `STRIPE_SECRET_KEY` (`sk_test_…` or live) with `supabase secrets set STRIPE_SECRET_KEY=...`. Rebuild the native app after installing `@stripe/stripe-react-native` (`npx expo run:ios` / `run:android`).
+   Set `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` from your [Supabase project](https://supabase.com/dashboard) (Settings → API). Optional: `EXPO_PUBLIC_GROK_API_KEY` if you use Grok features.
 
 3. Start the app
 

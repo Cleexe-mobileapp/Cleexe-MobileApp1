@@ -19,6 +19,22 @@ import {
 
 const PURPLE = '#6B4EFF';
 const OTHER_MAX = 48;
+const CATEGORY_ICONS: Record<ProfileCategory, string> = {
+  Athlete: '⚡',
+  Student: '📘',
+  Writer: '✍️',
+  Entrepreneur: '🚀',
+  Parent: '❤️',
+  Teacher: '🍎',
+  Designer: '🎨',
+  Doctor: '🩺',
+  Engineer: '🛠️',
+  Artist: '🖌️',
+  Musician: '🎵',
+  Chef: '🍳',
+  Coach: '🏁',
+  Other: '💡',
+};
 
 type Props = {
   visible: boolean;
@@ -104,7 +120,10 @@ export default function CategoryPickerModal({
                     pressed && styles.rowPressed,
                   ]}
                 >
-                  <Text style={[styles.rowText, rowActive && styles.rowTextActive]}>{c}</Text>
+                  <View style={styles.rowLeft}>
+                    <Text style={styles.rowIcon}>{CATEGORY_ICONS[c]}</Text>
+                    <Text style={[styles.rowText, rowActive && styles.rowTextActive]}>{c}</Text>
+                  </View>
                   {rowActive ? <Text style={styles.check}>✓</Text> : null}
                 </Pressable>
               );
@@ -176,6 +195,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F0F0F5',
   },
+  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  rowIcon: { fontSize: 18 },
   rowActive: {
     backgroundColor: '#F5F3FF',
     borderColor: '#E0DCFF',

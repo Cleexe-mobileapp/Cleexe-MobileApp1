@@ -12,13 +12,16 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AntDesign, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import Svg, { Path } from 'react-native-svg';
 
 import { router } from 'expo-router';
+import { useAuthSession } from '../context/AuthSessionProvider';
+import { handleSignUp } from '../lib/auth-email-otp';
 import { replaceWithMainTabs, replaceWithOnboarding } from '../lib/auth-routes';
 import { supabase, checkOnboardingCompleted } from '../services/supabase';
+import { extractSessionFromUrl } from '../lib/extract-oauth-session';
 
 function GoogleIcon({ size = 20 }) {
   return (
@@ -39,6 +42,7 @@ function isValidEmail(value) {
 }
 
 export default function SignUpScreen() {
+  const { refreshOnboarding } = useAuthSession();
   const client = useMemo(() => supabase, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -62,25 +66,32 @@ export default function SignUpScreen() {
       return;
     }
 
-    if (!password || password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setErrorMessage('Password mismatch');
-      return;
-    }
-
     setLoadingType('email');
     try {
-      const { error } = await client.auth.signUp({
+      const result = await handleSignUp(client, {
         email,
         password,
+        confirmPassword,
       });
 
-      if (error) throw error;
-      replaceWithOnboarding({ source: 'signup', email });
+      if (!result.ok) {
+        setErrorMessage(result.error.message || 'Authentication error');
+        return;
+      }
+
+      if (result.next === 'onboarding') {
+        await refreshOnboarding();
+        replaceWithOnboarding({ source: 'signup', email: result.email });
+        return;
+      }
+
+      router.push({
+        pathname: '/verify-otp',
+        params: {
+          email: result.email,
+          otpType: result.otpType ?? 'signup',
+        },
+      });
     } catch (error) {
       setErrorMessage(error.message || 'Authentication error');
     } finally {
@@ -119,6 +130,7 @@ export default function SignUpScreen() {
       });
 
       if (error) throw error;
+      await refreshOnboarding();
       const { data: { user: appleUser } } = await client.auth.getUser();
       const done = await checkOnboardingCompleted(appleUser?.id);
       if (done) await replaceWithMainTabs();
@@ -156,13 +168,14 @@ export default function SignUpScreen() {
       if (!data?.url) throw new Error('Unable to open Google login.');
 
       const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-      if (result.type !== 'success') return;
+      if (result.type !== 'success' || !result.url) return;
 
-      const { data: sessionData, error: sessionError } = await client.auth.getSession();
+      const { session, error: sessionError } = await extractSessionFromUrl(result.url);
       if (sessionError) throw sessionError;
 
-      if (sessionData?.session) {
-        const done = await checkOnboardingCompleted(sessionData.session.user?.id);
+      if (session) {
+        await refreshOnboarding();
+        const done = await checkOnboardingCompleted(session.user?.id);
         if (done) await replaceWithMainTabs();
         else replaceWithOnboarding({ source: 'signup_google' });
       }
@@ -241,6 +254,10 @@ export default function SignUpScreen() {
           />
         </View>
 
+        <Text style={styles.hint}>
+          Optional: leave password empty to sign up with email code only.
+        </Text>
+
         <View style={styles.fieldBlock}>
           <Text style={styles.label}>Password</Text>
           <View style={styles.inputWrapper}>
@@ -253,7 +270,11 @@ export default function SignUpScreen() {
               onChangeText={setPassword}
             />
             <Pressable onPress={() => setShowPassword((prev) => !prev)} style={styles.eyeToggle}>
-              <AntDesign name={showPassword ? 'eyeo' : 'eye'} size={18} color="#9CA3AF" />
+              <Ionicons
+                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                size={18}
+                color="#9CA3AF"
+              />
             </Pressable>
           </View>
         </View>
@@ -270,7 +291,11 @@ export default function SignUpScreen() {
               onChangeText={setConfirmPassword}
             />
             <Pressable onPress={() => setShowConfirmPassword((prev) => !prev)} style={styles.eyeToggle}>
-              <AntDesign name={showConfirmPassword ? 'eyeo' : 'eye'} size={18} color="#9CA3AF" />
+              <Ionicons
+                name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                size={18}
+                color="#9CA3AF"
+              />
             </Pressable>
           </View>
         </View>
@@ -287,7 +312,7 @@ export default function SignUpScreen() {
             {loadingType === 'email' ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.createText}>Create Account</Text>
+              <Text style={styles.createText}>Sign Up</Text>
             )}
           </Pressable>
         </View>
@@ -394,6 +419,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     fontSize: 12,
     letterSpacing: 0.4,
+  },
+  hint: {
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 18,
+    marginBottom: 10,
   },
   fieldBlock: {
     marginBottom: 12,

@@ -2,139 +2,204 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../services/supabase';
 
+import { BRAND } from './brand';
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Streak-based theme system — three tiers that evolve with the user
+// Cleexe brand — twilight purple + teal growth accents (see src/theme/brand.js)
+// Tiers: calm (light lavender), ascend (default dark), elite (gold + purple depth)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const THEME_TIERS = {
+  // ── Light / Calm — white / grey neutrals + purple accents (see BRAND.neutral*) ─
   calm: {
     tier: 'calm',
-    // Backgrounds
-    bg: '#F8FAFF',
-    bgDeep: '#EEF2FF',
-    surface: 'rgba(255,255,255,0.85)',
-    surfaceElevated: 'rgba(255,255,255,0.95)',
-    // Card (premium whisper shadow)
-    cardBg: '#FFFFFF',
-    cardBorder: 'rgba(0,0,0,0.03)',
-    cardShadowColor: '#000',
-    cardShadowOffset: { width: 0, height: 12 },
+
+    bg: BRAND.neutralBackground,
+    bgDeep: BRAND.neutralSurface,
+    bgGradientStart: BRAND.neutralBackground,
+    bgGradientEnd: BRAND.neutralSurface,
+
+    surface: 'rgba(249,250,251,0.96)',
+    surfaceElevated: BRAND.neutralBackground,
+    surfaceSolid: BRAND.neutralSurface,
+
+    cardBg: 'rgba(255,255,255,0.88)',
+    cardBorder: BRAND.neutralBorder,
+    cardShadowColor: '#1E1B4B',
+    cardShadowOffset: { width: 0, height: 2 },
     cardShadowOpacity: 0.04,
-    cardShadowRadius: 16,
-    cardElevation: 3,
-    cardRadius: 24,
-    // Glass (frosted card with white inner border)
-    glassBg: 'rgba(255,255,255,0.5)',
-    glassBorder: 'rgba(255,255,255,0.3)',
+    cardShadowRadius: 8,
+    cardElevation: 1,
+    cardRadius: 20,
+
+    glassBg: 'rgba(255,255,255,0.60)',
+    glassBorder: 'rgba(107,78,255,0.12)',
     glassBlurTint: 'light',
-    glassBlurIntensity: 20,
-    // Colors
-    primary: '#4F6AFF',
-    primaryMuted: 'rgba(79,106,255,0.12)',
-    accent: '#6366F1',
-    accentMuted: 'rgba(99,102,241,0.10)',
-    gold: '#D97706',
-    // Text
-    textPrimary: '#111827',
-    textSecondary: '#6B7280',
-    textMuted: '#9CA3AF',
+    glassBlurIntensity: 40,
+
+    primary: BRAND.primaryAction,
+    primarySoft: BRAND.purpleGradientStart,
+    primaryMuted: 'rgba(139,92,246,0.12)',
+    accent: BRAND.teal,
+    accentMuted: 'rgba(0,212,200,0.12)',
+    gold: BRAND.gold,
+
+    textPrimary: BRAND.textOnLight,
+    textHeading: BRAND.textHeadingLight,
+    textUtility: BRAND.primaryAction,
+    textSecondary: '#5C5770',
+    textMuted: BRAND.textMuted,
     textOnPrimary: '#FFFFFF',
-    // Chrome button
-    chromeBg: '#4F6AFF',
-    chromeShine: 'rgba(255,255,255,0.35)',
-    chromeShadow: 'rgba(79,106,255,0.18)',
-    // Tab bar
-    tabBg: 'rgba(255,255,255,0.92)',
-    tabBorder: 'rgba(0,0,0,0.04)',
-    tabActive: '#4F6AFF',
-    tabInactive: '#B4B9C5',
-    // Semantic
-    separator: 'rgba(0,0,0,0.04)',
-    inputBg: 'rgba(255,255,255,0.7)',
-    inputBorder: 'rgba(0,0,0,0.06)',
-    // Mesh orbs
-    orbPrimary: 'rgba(79,106,255,0.08)',
-    orbSecondary: 'rgba(99,102,241,0.05)',
+    textOnAccent: '#0A1628',
+
+    chromeBg: BRAND.primaryAction,
+    chromeShine: 'rgba(255,255,255,0.18)',
+    chromeShadow: 'rgba(74,46,204,0.25)',
+
+    tabBg: 'rgba(255,255,255,0.82)',
+    tabBorder: BRAND.neutralBorder,
+    tabActive: BRAND.primaryAction,
+    tabInactive: BRAND.textMuted,
+
+    separator: BRAND.neutralBorder,
+    inputBg: BRAND.neutralBackground,
+    inputBorder: BRAND.neutralBorder,
+
+    orbPrimary: 'rgba(107,78,255,0.06)',
+    orbSecondary: 'rgba(0,212,200,0.05)',
+
+    gradientCtaStart: BRAND.gradientButtonStart,
+    gradientCtaEnd: BRAND.gradientButtonEnd,
+    coral: BRAND.coral,
+    success: BRAND.success,
   },
+
+  // ── Dark / Ascend — default Cleexe twilight (purple–indigo) ───────────────
   ascend: {
     tier: 'ascend',
-    bg: '#0D0A1A',
-    bgDeep: '#080612',
-    surface: 'rgba(139,92,246,0.06)',
-    surfaceElevated: 'rgba(139,92,246,0.10)',
-    cardBg: 'rgba(20,16,40,0.90)',
-    cardBorder: 'rgba(139,92,246,0.10)',
+
+    bg: BRAND.bgStart,
+    bgDeep: BRAND.bgEnd,
+    bgGradientStart: BRAND.bgStart,
+    bgGradientEnd: BRAND.bgEnd,
+
+    surface: 'rgba(255,255,255,0.05)',
+    surfaceElevated: 'rgba(255,255,255,0.08)',
+    surfaceSolid: BRAND.surfaceCardSolid,
+
+    cardBg: 'rgba(37,33,66,0.72)',
+    cardBorder: BRAND.borderLavenderOnDark,
     cardShadowColor: '#000',
-    cardShadowOffset: { width: 0, height: 16 },
-    cardShadowOpacity: 0.25,
-    cardShadowRadius: 20,
-    cardElevation: 6,
-    cardRadius: 24,
-    glassBg: 'rgba(30,20,60,0.50)',
-    glassBorder: 'rgba(255,255,255,0.12)',
+    cardShadowOffset: { width: 0, height: 2 },
+    cardShadowOpacity: 0.12,
+    cardShadowRadius: 10,
+    cardElevation: 2,
+    cardRadius: 20,
+
+    glassBg: BRAND.glass15,
+    glassBorder: 'rgba(184,179,209,0.12)',
     glassBlurTint: 'dark',
-    glassBlurIntensity: 25,
-    primary: '#8B5CF6',
-    primaryMuted: 'rgba(139,92,246,0.15)',
-    accent: '#FFD166',
-    accentMuted: 'rgba(255,209,102,0.12)',
-    gold: '#FFD166',
-    textPrimary: '#F3F0FF',
-    textSecondary: '#A78BFA',
-    textMuted: '#7C6CAA',
+    glassBlurIntensity: 48,
+
+    primary: BRAND.primaryAction,
+    primarySoft: BRAND.purpleSoft,
+    primaryMuted: 'rgba(139,92,246,0.18)',
+    accent: BRAND.teal,
+    accentMuted: 'rgba(0,212,200,0.14)',
+    gold: BRAND.gold,
+
+    textPrimary: BRAND.textPrimary,
+    textHeading: BRAND.textPrimary,
+    textUtility: BRAND.primaryAction,
+    textSecondary: BRAND.textSecondary,
+    textMuted: BRAND.textMuted,
     textOnPrimary: '#FFFFFF',
-    chromeBg: '#8B5CF6',
-    chromeShine: 'rgba(255,209,102,0.30)',
-    chromeShadow: 'rgba(139,92,246,0.20)',
-    tabBg: 'rgba(13,10,26,0.95)',
-    tabBorder: 'rgba(139,92,246,0.08)',
-    tabActive: '#A78BFA',
-    tabInactive: '#4A3D6A',
-    separator: 'rgba(139,92,246,0.08)',
-    inputBg: 'rgba(139,92,246,0.06)',
-    inputBorder: 'rgba(139,92,246,0.12)',
-    orbPrimary: 'rgba(139,92,246,0.10)',
-    orbSecondary: 'rgba(255,209,102,0.06)',
+    textOnAccent: '#061018',
+
+    chromeBg: BRAND.primaryAction,
+    chromeShine: 'rgba(255,255,255,0.2)',
+    chromeShadow: 'rgba(0,0,0,0.35)',
+
+    tabBg: BRAND.tabBarBg,
+    tabBorder: 'rgba(184,179,209,0.12)',
+    tabActive: BRAND.primaryAction,
+    tabInactive: BRAND.textSecondary,
+
+    separator: 'rgba(184,179,209,0.10)',
+    inputBg: 'rgba(255,255,255,0.06)',
+    inputBorder: 'rgba(184,179,209,0.14)',
+
+    orbPrimary: 'rgba(139,92,246,0.14)',
+    orbSecondary: 'rgba(0,212,200,0.08)',
+
+    gradientCtaStart: BRAND.gradientButtonStart,
+    gradientCtaEnd: BRAND.gradientButtonEnd,
+    coral: BRAND.coral,
+    success: BRAND.success,
   },
+
+  // ── Elite — gold achievements + deep purple ───────────────────────────────
   elite: {
     tier: 'elite',
-    bg: '#050505',
-    bgDeep: '#000000',
-    surface: 'rgba(255,215,0,0.03)',
-    surfaceElevated: 'rgba(255,215,0,0.06)',
-    cardBg: 'rgba(12,12,8,0.92)',
-    cardBorder: 'rgba(255,215,0,0.06)',
+
+    bg: '#15102A',
+    bgDeep: '#0D0A18',
+    bgGradientStart: '#1A1435',
+    bgGradientEnd: '#0D0A18',
+
+    surface: 'rgba(255,209,102,0.06)',
+    surfaceElevated: 'rgba(255,209,102,0.10)',
+    surfaceSolid: '#1E1838',
+
+    cardBg: 'rgba(30,24,56,0.78)',
+    cardBorder: 'rgba(255,209,102,0.18)',
     cardShadowColor: '#000',
-    cardShadowOffset: { width: 0, height: 20 },
-    cardShadowOpacity: 0.35,
-    cardShadowRadius: 24,
-    cardElevation: 8,
-    cardRadius: 24,
-    glassBg: 'rgba(10,10,10,0.50)',
-    glassBorder: 'rgba(255,255,255,0.08)',
+    cardShadowOffset: { width: 0, height: 2 },
+    cardShadowOpacity: 0.14,
+    cardShadowRadius: 10,
+    cardElevation: 2,
+    cardRadius: 20,
+
+    glassBg: 'rgba(21,16,42,0.55)',
+    glassBorder: 'rgba(255,209,102,0.10)',
     glassBlurTint: 'dark',
-    glassBlurIntensity: 30,
-    primary: '#FFD700',
-    primaryMuted: 'rgba(255,215,0,0.10)',
-    accent: '#FFC107',
-    accentMuted: 'rgba(255,193,7,0.10)',
-    gold: '#FFD700',
-    textPrimary: '#FAFAF5',
-    textSecondary: '#D4AF37',
-    textMuted: '#6B6340',
-    textOnPrimary: '#050505',
-    chromeBg: '#FFD700',
-    chromeShine: 'rgba(255,255,255,0.40)',
-    chromeShadow: 'rgba(255,215,0,0.18)',
-    tabBg: 'rgba(5,5,5,0.97)',
-    tabBorder: 'rgba(255,215,0,0.06)',
-    tabActive: '#FFD700',
-    tabInactive: '#4A4530',
-    separator: 'rgba(255,215,0,0.06)',
-    inputBg: 'rgba(255,215,0,0.04)',
-    inputBorder: 'rgba(255,215,0,0.10)',
-    orbPrimary: 'rgba(255,215,0,0.08)',
-    orbSecondary: 'rgba(255,193,7,0.04)',
+    glassBlurIntensity: 52,
+
+    primary: BRAND.gold,
+    primarySoft: '#FFE08A',
+    primaryMuted: 'rgba(255,209,102,0.14)',
+    accent: BRAND.purple,
+    accentMuted: 'rgba(107,78,255,0.16)',
+    gold: BRAND.gold,
+
+    textPrimary: BRAND.textPrimary,
+    textHeading: BRAND.textPrimary,
+    textUtility: BRAND.primaryAction,
+    textSecondary: BRAND.textSecondary,
+    textMuted: '#7A7399',
+    textOnPrimary: '#1A1435',
+    textOnAccent: '#FFFFFF',
+
+    chromeBg: BRAND.gold,
+    chromeShine: 'rgba(255,255,255,0.25)',
+    chromeShadow: 'rgba(255,209,102,0.2)',
+
+    tabBg: 'rgba(21,16,42,0.98)',
+    tabBorder: 'rgba(255,209,102,0.10)',
+    tabActive: BRAND.gold,
+    tabInactive: '#6B6288',
+
+    separator: 'rgba(184,179,209,0.08)',
+    inputBg: 'rgba(255,209,102,0.05)',
+    inputBorder: 'rgba(255,209,102,0.12)',
+
+    orbPrimary: 'rgba(255,209,102,0.10)',
+    orbSecondary: 'rgba(107,78,255,0.10)',
+
+    gradientCtaStart: BRAND.gradientButtonStart,
+    gradientCtaEnd: BRAND.gradientButtonEnd,
+    coral: BRAND.coral,
+    success: BRAND.success,
   },
 };
 

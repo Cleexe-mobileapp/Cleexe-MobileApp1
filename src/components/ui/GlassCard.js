@@ -1,16 +1,19 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../../theme/ThemeContext';
 
-export default function GlassCard({ children, style, noPad }) {
+export default function GlassCard({ children, style, noPad, intensity, tint }) {
   const t = useTheme();
+  const blurIntensity = intensity ?? t.glassBlurIntensity;
+  const blurTint = tint ?? t.glassBlurTint;
 
   return (
     <View
       style={[
         styles.outer,
         {
+          borderRadius: t.cardRadius,
           shadowColor: t.cardShadowColor,
           shadowOffset: t.cardShadowOffset,
           shadowOpacity: t.cardShadowOpacity,
@@ -20,14 +23,27 @@ export default function GlassCard({ children, style, noPad }) {
         style,
       ]}
     >
+      {Platform.OS === 'android' && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderRadius: t.cardRadius,
+              backgroundColor: t.tier === 'calm'
+                ? 'rgba(255,255,255,0.90)'
+                : t.cardBg,
+            },
+          ]}
+        />
+      )}
       <BlurView
-        intensity={t.glassBlurIntensity}
-        tint={t.glassBlurTint}
+        intensity={blurIntensity}
+        tint={blurTint}
         style={[
           styles.blur,
           {
             borderRadius: t.cardRadius,
-            borderColor: t.glassBorder,
+            borderColor: t.cardBorder,
             backgroundColor: t.glassBg,
           },
         ]}
@@ -42,7 +58,7 @@ export default function GlassCard({ children, style, noPad }) {
 
 const styles = StyleSheet.create({
   outer: {
-    borderRadius: 24,
+    overflow: 'hidden',
   },
   blur: {
     overflow: 'hidden',

@@ -34,7 +34,7 @@ export default function FollowListScreen({ mode }: { mode: Mode }) {
     paramUserId == null ? undefined : Array.isArray(paramUserId) ? paramUserId[0] : paramUserId;
 
   const targetUserId = param || session?.user?.id || '';
-  const title = mode === 'followers' ? 'Followers' : 'Following';
+  const title = mode === 'followers' ? 'Heard' : 'Hears';
 
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,7 +130,7 @@ export default function FollowListScreen({ mode }: { mode: Mode }) {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <Text style={styles.empty}>
-              {mode === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
+              {mode === 'followers' ? 'No heard yet.' : 'No hears yet.'}
             </Text>
           }
           renderItem={({ item }) => (
